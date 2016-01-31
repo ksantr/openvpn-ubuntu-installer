@@ -7,5 +7,5 @@ OpenVPN installer for Ubuntu
     cd openvpn-ubuntu-installer && chmod +x openvpn-ubuntu-installer.sh
     sudo ./openvpn-ubuntu-installer.sh
 ```
-###Installation
-Licence MIT
+###License
+MIT
