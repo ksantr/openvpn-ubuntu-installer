@@ -34,6 +34,12 @@ echo -n "OpenVPN network (Empty for default 10.8.0.0/8): "
 read network
 if [[ -z "$network" ]]; then network="10.8.0.0/8"; fi
 
+# firewall settings setting
+ufw=0
+while [[ "$ufw" -ne "y" ]] || [[ "$ufw" -ne "n" ]]; do
+echo -n "Use ufw for firewall settings (y/n): "
+read ufw;done
+
 # ipv6 settings
 ipv6=0
 while [[ "$ipv6" -ne "y" ]] || [[ "$ipv6" -ne "n" ]]; do
@@ -47,7 +53,11 @@ echo "
 "
 
 sudo apt-get update && sudo apt-get upgrade -y
-sudo apt-get install openvpn easy-rsa unzip ufw -y
+sudo apt-get install openvpn easy-rsa unzip -y
+if [[ "$ufw" = "y" ]]; then
+    sudo apt-get install ufw -y;
+fi
+
 sudo chmod 777 /etc/openvpn/
 # OpenVPN Configuration
 gunzip -c /usr/share/doc/openvpn/examples/sample-config-files/server.conf.gz > /etc/openvpn/server.conf
@@ -74,33 +84,33 @@ fi
 
 sudo sysctl -p; 
 
-echo "
-################################## 
-#####    UFW configuration    ####  
-##################################
-"
-
-sudo ufw allow ssh
-sudo ufw allow $port/udp
-sudo sed -i 's/DEFAULT_FORWARD_POLICY="DROP"/DEFAULT_FORWARD_POLICY="ACCEPT"/' /etc/default/ufw
-sudo sed -i 1i"# START OPENVPN RULES" /etc/ufw/before.rules
-sudo sed -i 2i"# NAT table rules" /etc/ufw/before.rules
-sudo sed -i 3i"*nat" /etc/ufw/before.rules
-sudo sed -i 4i":POSTROUTING ACCEPT [0:0]" /etc/ufw/before.rules
-sudo sed -i 5i"# Allow traffic from OpenVPN client to eth0" /etc/ufw/before.rules
-sudo sed -i 6i"-A POSTROUTING -s $network -o eth0 -j MASQUERADE" /etc/ufw/before.rules
-sudo sed -i 7i"COMMIT" /etc/ufw/before.rules
-sudo sed -i 8i"# END OPENVPN RULES" /etc/ufw/before.rules
-echo -e "\n[!] Firewall enabling:"
-sudo ufw enable
-sudo ufw status
+if [[ "$ufw" = "y" ]]; then
+    echo "
+    ################################## 
+    #####    UFW configuration    ####  
+    ##################################
+    "
+    sudo ufw allow ssh
+    sudo ufw allow $port/udp
+    sudo sed -i 's/DEFAULT_FORWARD_POLICY="DROP"/DEFAULT_FORWARD_POLICY="ACCEPT"/' /etc/default/ufw
+    sudo sed -i 1i"# START OPENVPN RULES" /etc/ufw/before.rules
+    sudo sed -i 2i"# NAT table rules" /etc/ufw/before.rules
+    sudo sed -i 3i"*nat" /etc/ufw/before.rules
+    sudo sed -i 4i":POSTROUTING ACCEPT [0:0]" /etc/ufw/before.rules
+    sudo sed -i 5i"# Allow traffic from OpenVPN client to eth0" /etc/ufw/before.rules
+    sudo sed -i 6i"-A POSTROUTING -s $network -o eth0 -j MASQUERADE" /etc/ufw/before.rules
+    sudo sed -i 7i"COMMIT" /etc/ufw/before.rules
+    sudo sed -i 8i"# END OPENVPN RULES" /etc/ufw/before.rules
+    echo -e "\n[!] Firewall enabling:"
+    sudo ufw enable
+    sudo ufw status;
+fi
 
 echo "
 ################################## 
 ###  Prepare keys generation.  ### 
 ##################################
 "
-
 cp -r /usr/share/easy-rsa/ /etc/openvpn
 mkdir /etc/openvpn/easy-rsa/keys
 cd /etc/openvpn/easy-rsa
@@ -111,7 +121,6 @@ echo "
 #####  Generate server keys  #####  
 ##################################
 "
-
 ./clean-all
 ./build-dh
 ./pkitool --initca
