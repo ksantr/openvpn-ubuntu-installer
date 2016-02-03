@@ -11,18 +11,34 @@ echo -e "
 os=$( cat /etc/issue | grep -i ubuntu > /dev/null; echo $? );
 if [[ "$os" -ne 0 ]]; then echo "This is not Ubuntu."; exit 0; fi
 
+# Client's and server's names
 echo -n "Type the client name (Empty for default name): "
 read client
 if [[ -z "$client" ]]; then client="client1";fi
 echo -n "Type the server name (Empty for default name): "
 read server
+
+# VPN ip address
 if [[ -z "$server" ]]; then server="server";fi
 echo -n "Type the openvpn ip address: "
 read vpn_ip
 if [[ -z "$vpn_ip" ]]; then echo "Empty ip"; exit 0;fi
+
+# Port
 echo -n "Type the openvpn port (Empty for default 1194): "
 read port
 if [[ -z "$port" ]]; then port="1194"; fi
+
+# Network
+echo -n "OpenVPN network (Empty for default 10.8.0.0/8): "
+read network
+if [[ -z "$network" ]]; then network="10.8.0.0/8"; fi
+
+# ipv6 settings
+ipv6=0
+while [[ "$ipv6" -ne "y" ]] || [[ "$ipv6" -ne "n" ]]; do
+echo -n "Disable ipv6 (y/n): "
+read ipv6; done
 
 echo "
 ################################## 
@@ -44,13 +60,19 @@ sed -i 's/;user nobody/user nobody/' /etc/openvpn/server.conf
 sed -i 's/;group nogroup/group nogroup/' /etc/openvpn/server.conf
 sed -i 's/;cipher DES-EDE3-CBC/cipher DES-EDE3-CBC/' /etc/openvpn/server.conf
 # Packet Forwarding
-sudo sed -i '$ a\net.ipv4.ip_forward=1' /etc/sysctl.conf
-# Disable ipv6
-sudo sed -i '$ a\net.ipv6.conf.all.disable_ipv6 = 1' /etc/sysctl.conf
-sudo sed -i '$ a\net.ipv6.conf.default.disable_ipv6 = 1' /etc/sysctl.conf
-sudo sed -i '$ a\net.ipv6.conf.lo.disable_ipv6 = 1' /etc/sysctl.conf
-# Apply rules
-sudo sysctl -p
+sudo sysctl net.ipv4.ip_forward=1
+
+if [[ "$ipv6" = "y" ]]; then
+    echo 
+    # Disable ipv6
+    sudo sysctl net.ipv6.conf.all.disable_ipv6=1
+    sudo sysctl net.ipv6.conf.default.disable_ipv6=1
+    sudo sysctl net.ipv6.conf.lo.disable_ipv6=1
+    # Apply rules
+    echo "[!] ipv6 disabled"
+fi
+
+sudo sysctl -p; 
 
 echo "
 ################################## 
@@ -66,7 +88,7 @@ sudo sed -i 2i"# NAT table rules" /etc/ufw/before.rules
 sudo sed -i 3i"*nat" /etc/ufw/before.rules
 sudo sed -i 4i":POSTROUTING ACCEPT [0:0]" /etc/ufw/before.rules
 sudo sed -i 5i"# Allow traffic from OpenVPN client to eth0" /etc/ufw/before.rules
-sudo sed -i 6i"-A POSTROUTING -s 10.8.0.0/8 -o eth0 -j MASQUERADE" /etc/ufw/before.rules
+sudo sed -i 6i"-A POSTROUTING -s $network -o eth0 -j MASQUERADE" /etc/ufw/before.rules
 sudo sed -i 7i"COMMIT" /etc/ufw/before.rules
 sudo sed -i 8i"# END OPENVPN RULES" /etc/ufw/before.rules
 echo -e "\n[!] Firewall enabling:"
