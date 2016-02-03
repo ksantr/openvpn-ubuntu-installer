@@ -36,13 +36,13 @@ if [[ -z "$network" ]]; then network="10.8.0.0/8"; fi
 
 # firewall settings setting
 ufw=0
-while [[ "$ufw" -ne "y" ]] || [[ "$ufw" -ne "n" ]]; do
+while [[ "$ufw" != "y" || "$ufw" != "n" ]]; do
 echo -n "Use ufw for firewall settings (y/n): "
 read ufw;done
 
 # ipv6 settings
 ipv6=0
-while [[ "$ipv6" -ne "y" ]] || [[ "$ipv6" -ne "n" ]]; do
+while [[ "$ipv6" != "y" || "$ipv6" != "n" ]]; do
 echo -n "Disable ipv6 (y/n): "
 read ipv6; done
 
