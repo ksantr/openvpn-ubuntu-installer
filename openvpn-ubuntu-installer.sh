@@ -12,7 +12,7 @@ os=$( cat /etc/issue | grep -i ubuntu > /dev/null; echo $? );
 if [[ "$os" -ne 0 ]]; then echo "This is not Ubuntu."; exit 0; fi
 
 # Client's and server's names
-echo -n "Type the client name (Empty for default name): "
+echo -n "Type the client name for cert name (Empty for default name): "
 read client
 if [[ -z "$client" ]]; then client="client1";fi
 echo -n "Type the server name (Empty for default name): "
