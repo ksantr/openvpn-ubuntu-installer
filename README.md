@@ -1,7 +1,7 @@
 # openvpn-ubuntu-installer
 OpenVPN installer for Ubuntu
 
-####It uses ufw for firewall configuration. You need to configure iptables manually if you don't want to use ufw.
+Caution!!! It uses ufw for firewall configuration. You need to configure iptables manually if you don't want to use ufw.
 
 ###Installation
 ```bash
