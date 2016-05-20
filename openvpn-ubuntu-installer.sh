@@ -140,6 +140,12 @@ sed -i "s/remote my-server-1 1194/remote $vpn_ip $port/" /tmp/$client/client.ovp
 sed -i "s/client.crt/$client.crt/" /tmp/$client/client.ovpn
 sed -i "s/client.key/$client.key/" /tmp/$client/client.ovpn
 sed -i 's/;cipher x/cipher DES-EDE3-CBC/' /tmp/$client/client.ovpn	
+
+# DNS fix
+echo "script-security 2" >> /tmp/$client/client.ovpn
+echo "up /etc/openvpn/update-resolv-conf" >> /tmp/$client/client.ovpn
+echo "down /etc/openvpn/update-resolv-conf" >> /tmp/$client/client.ovpn
+
 cd /etc/openvpn/ && sudo rm -rf /etc/openvpn/easy-rsa/
 sudo update-rc.d openvpn defaults > /dev/null;
 sudo chmod 755 /etc/openvpn/;
